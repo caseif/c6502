@@ -2,7 +2,6 @@
 ; test cpu status
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ;;;;;;;;;;;;;;;;
@@ -95,3 +94,8 @@ NOP                 ; perform assertions:
                     ; c = 1
                     ; n = 0
                     ; z = 1
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

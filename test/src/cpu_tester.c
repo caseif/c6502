@@ -23,18 +23,16 @@
  * THE SOFTWARE.
  */
 
-#include "cpu/cpu_tester.h"
-
-#include "cpu/cpu.h"
-#include "cpu/instrs.h"
-#include "system.h"
+#include "cpu_tester.h"
 #include "test_assert.h"
 
+#include "c6502/cpu.h"
+#include "c6502/instrs.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-extern CpuRegisters g_cpu_regs;
 
 extern bool test_addition(void);
 extern bool test_arithmetic(void);
@@ -45,6 +43,9 @@ extern bool test_stack(void);
 extern bool test_status(void);
 extern bool test_store_load(void);
 extern bool test_subtraction(void);
+
+static unsigned char sys_ram[0x800];
+static DataBlob g_program;
 
 static DataBlob _load_file(FILE *file) {
     fseek(file, 0L, SEEK_END);
@@ -60,6 +61,50 @@ static DataBlob _load_file(FILE *file) {
     return (DataBlob) {data, size};
 }
 
+static void _log_callback(char *instr_str, CpuRegisters last_regs) {
+    printf("%04X %s %02X\n", last_regs.pc, instr_str, last_regs.sp);
+}
+
+uint8_t memory_read(uint16_t addr) {
+    if (addr < 0x2000) {
+        return sys_ram[addr % sizeof(sys_ram)];
+    } else if (addr >= 0x8000) {
+        addr %= 0x8000;
+
+         // mirroring
+        if (addr >= 0x4000 && g_program.size <= 0x4000) {
+            addr -= 0x4000;
+        }
+
+        if (addr >= g_program.size) {
+            return 0;
+        }
+
+        return g_program.data[addr];
+    } else {
+        return 0;
+    }
+}
+
+void memory_write(uint16_t addr, uint8_t val) {
+    if (addr < 0x2000) {
+        sys_ram[addr % sizeof(sys_ram)] = val;
+    } else if (addr >= 0x8000) {
+        addr %= 0x8000;
+
+        // mirroring
+        if (addr >= 0x4000 && g_program.size <= 0x4000) {
+            addr -= 0x4000;
+        }
+
+        if (addr >= g_program.size) {
+            return;
+        }
+
+        g_program.data[addr] = val;
+    }
+}
+
 void load_cpu_test(char *file_name) {
     char *prefix = "test/res/";
     char *qualified = malloc(strlen(file_name) + strlen(prefix) + 1);
@@ -71,34 +116,31 @@ void load_cpu_test(char *file_name) {
         printf("Could not open program file %s.\n", file_name);
     }
 
-    DataBlob program = _load_file(program_file);
+    g_program = _load_file(program_file);
 
-    if (!program.data) {
+    if (!g_program.data) {
         printf("Failed to load program %s.\n", file_name);
         exit(-1);
     }
 
-    Cartridge *cart = (Cartridge*) malloc(sizeof(Cartridge));
-    cart->prg_rom = (unsigned char*) malloc(program.size);
-    memcpy(cart->prg_rom, program.data, program.size);
-    cart->prg_size = program.size;
-    cart->chr_size = 0;
-    cart->mapper = (Mapper*) malloc(sizeof(Mapper));
-    mapper_init_nrom(cart->mapper);
-    cart->title = qualified;
+    memset(sys_ram, 0, sizeof(sys_ram));
 
-    initialize_system(cart);
+    initialize_cpu(memory_read, memory_write);
+    //cpu_set_log_callback(_log_callback);
 
     printf("Successfully loaded program file %s.\n", file_name);
 }
 
-extern Instruction *g_cur_instr;
-extern uint8_t g_instr_cycle;
+void unload_cpu_test() {
+    free(g_program.data);
+}
 
 void pump_cpu(void) {
     do {
         cycle_cpu();
-    } while (!(g_cur_instr->mnemonic == NOP && g_instr_cycle == 1));
+    } while (!(cpu_get_current_instruction() != NULL
+            && cpu_get_current_instruction()->mnemonic == NOP
+            && cpu_get_instruction_step() == 1));
 }
 
 bool do_cpu_tests(void) {

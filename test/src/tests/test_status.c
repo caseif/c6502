@@ -24,56 +24,84 @@
  */
 
 #include "test_assert.h"
-#include "cpu/cpu_tester.h"
+#include "cpu_tester.h"
 
-#include "cpu/cpu.h"
+#include "c6502/cpu.h"
 
 extern CpuRegisters g_cpu_regs;
 
-bool test_subtraction(void) {
-    load_cpu_test("subtraction.bin");
+bool test_status(void) {
+    load_cpu_test("status.bin");
 
+    // test explicit flag-setting
     pump_cpu();
-    ASSERT_EQ(0x10, g_cpu_regs.acc);
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(1, g_cpu_regs.status.interrupt_disable);
+
+    // set overflow flag explicitly so we can test clearing it in code
+    g_cpu_regs.status.overflow = 1;
+
+    // test explicit flag-clearing
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.status.carry);
+    ASSERT_EQ(0, g_cpu_regs.status.interrupt_disable);
+    ASSERT_EQ(0, g_cpu_regs.status.overflow);
+
+    // test comparison instructions
+
+    // test CMP
+
+    // a = v
+    pump_cpu();
     ASSERT_EQ(1, g_cpu_regs.status.carry);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.overflow);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0x0F, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.overflow);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.overflow);
     ASSERT_EQ(1, g_cpu_regs.status.zero);
 
+    // a > v
     pump_cpu();
-    ASSERT_EQ(0xF0, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.overflow);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0xA0, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.overflow);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0x60, g_cpu_regs.acc);
     ASSERT_EQ(1, g_cpu_regs.status.carry);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.overflow);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // a < v
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.status.carry);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // a > v && a is neg && v is neg
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // a > v && a is neg && v is pos
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // a < v && a is neg && v is neg
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.status.carry);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // test CPX
+
+    // x == v
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
+
+    // test CPY
+
+    // y == v
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
 
     return true;
 }

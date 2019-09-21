@@ -2,7 +2,6 @@
 ; test subtraction
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 SEC                 ; set carry flag
@@ -64,3 +63,8 @@ NOP                 ; perform assertions
                     ; n = 0
                     ; v = 1
                     ; z = 0
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

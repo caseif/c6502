@@ -47,10 +47,6 @@ const InterruptType INT_BRK = (InterruptType) {0xFFFE, false, true,  true,  true
 
 CpuRegisters g_cpu_regs;
 
-unsigned char g_debug_buffer[0x1000];
-
-uint16_t base_pc;
-
 // interrupt lines
 static bool g_nmi_line = false;
 static bool g_irq_line = false;
@@ -79,19 +75,23 @@ static const InterruptType *g_cur_interrupt; // the interrupt type currently bei
 static const InterruptType *g_queued_interrupt; // the interrupt type currently queued
 static bool g_nmi_hijack; // set when an NMI "hijacks" a software interrupt
 
-static void (*g_log_callback)(char*) = NULL;
+static void (*g_log_callback)(char*, CpuRegisters) = NULL;
+static CpuRegisters g_regs_snapshot;
 
 void initialize_cpu(uint8_t (*mem_read_func)(uint16_t), void (*mem_write_func)(uint16_t, uint8_t)) {
     g_mem_read = mem_read_func;
     g_mem_write = mem_write_func;
 
-    memset(&g_cpu_regs.status, DEFAULT_STATUS, 1);
+    memset(&g_cpu_regs, 0, sizeof(g_cpu_regs)); // clear registers for init
+    g_cpu_regs.status.serial = DEFAULT_STATUS;
 
     g_queued_interrupt = &INT_RST;
 
     for (int i = 0; i < 7; i++) {
         cycle_cpu();
     }
+
+    g_regs_snapshot = g_cpu_regs;
 }
 
 CpuRegisters *cpu_get_registers(void) {
@@ -106,7 +106,7 @@ Instruction *cpu_get_current_instruction(void) {
     return g_cur_instr;
 }
 
-void cpu_set_log_callback(void (*callback)(char*)) {
+void cpu_set_log_callback(void (*callback)(char*, CpuRegisters)) {
     g_log_callback = callback;
 }
 
@@ -1082,7 +1082,8 @@ static void _do_instr_cycle(void) {
     } else if (g_instr_cycle == 1) {
         if (g_log_callback != NULL && g_cur_instr != NULL) {
             char instr_str[40];
-            g_log_callback(cpu_print_current_instruction(instr_str));
+            g_log_callback(cpu_print_current_instruction(instr_str), g_regs_snapshot);
+            g_regs_snapshot = g_cpu_regs;
         }
 
         if (g_queued_interrupt) {

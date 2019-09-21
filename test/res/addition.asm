@@ -2,7 +2,6 @@
 ; test addition
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ;;;;;;;;;;;;;;;;
@@ -82,3 +81,8 @@ NOP             ; perform assertions:
                 ; Z = 1
                 ; V = 0
                 ; N = 0
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

@@ -2,7 +2,6 @@
 ;;; store/load tests
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ;;;;;;;;;;;;;;;;
@@ -70,9 +69,6 @@ STA $0303           ; write a=1 to $0303
 STA $0903           ; write a=1 to $0903 ($0103 with mirroring)
 STA $0A03           ; write a=1 to $0A03 ($0203 with mirroring)
 STA $0F03           ; write a=1 to $0F03 ($0303 with mirroring)
-; TODO: test I/O registers
-; TODO: test expansion ROM
-; TODO: test SRAM
 STA $8000           ; write to ROM (should be ignored silently)
 STA $FFFF           ; write to ROM (high address)
 NOP                 ; perform assertions:
@@ -236,3 +232,8 @@ NOP                 ; perform assertions:
                     ; $0009 = 0x52
 
 ; remaining instruction+addressing combos are redundant due to shared implementations
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

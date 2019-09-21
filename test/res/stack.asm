@@ -2,12 +2,15 @@
 ; test stack operations
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ;;;;;;;;;;;;;;;;
 ; basic stack operations
 ;;;;;;;;;;;;;;;;
+
+LDX #$FF            ; quick hack to initialize the stack pointer as 0xFF, since
+TXS                 ; CPU init starts with an RST which decrements the stack
+                    ; pointer twice when it pushes the address
 
 LDA #$01            ; set acc
 PHA                 ; push acc to stack
@@ -65,3 +68,8 @@ NOP                 ; perform assertions:
                     ; Z = 0
                     ; I = 1
                     ; N = 0
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

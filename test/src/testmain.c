@@ -23,11 +23,7 @@
  * THE SOFTWARE.
  */
 
-#include "cpu/cpu_tester.h"
-
-#include "cartridge.h"
-#include "loader.h"
-#include "system.h"
+#include "cpu_tester.h"
 
 #include <stdio.h>
 #include <stdlib.h>

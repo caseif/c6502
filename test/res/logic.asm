@@ -2,7 +2,6 @@
 ; test bitwise logic
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 JMP entry_point     ; skip to entry point
@@ -271,3 +270,8 @@ NOP                 ; perform assertions:
                     ; c = 1
                     ; n = 0
                     ; z = 1
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

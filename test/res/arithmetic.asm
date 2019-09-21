@@ -2,7 +2,6 @@
 ; test basic arithmetic
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ; skip to the entry point
@@ -223,3 +222,8 @@ NOP                 ; perform assertions:
                     ; y = 0x7F
                     ; n = 0
                     ; z = 0
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

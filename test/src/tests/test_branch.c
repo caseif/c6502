@@ -24,20 +24,54 @@
  */
 
 #include "test_assert.h"
-#include "cpu/cpu_tester.h"
+#include "cpu_tester.h"
 
-#include "cpu/cpu.h"
+#include "c6502/cpu.h"
 
 extern CpuRegisters g_cpu_regs;
 
-bool test_interrupt(void) {
-    load_cpu_test("interrupt.bin");
+bool test_branch(void) {
+    load_cpu_test("branch.bin");
 
+    // test JMP (indirect)
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.x);
+
+    // test JMP (indirect)
+    pump_cpu();
+    ASSERT_EQ(2, g_cpu_regs.x);
+
+    // test JMP
     pump_cpu();
     ASSERT_EQ(1, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.x);
+
+    // test JSR
+    pump_cpu();
+    ASSERT_EQ(7, g_cpu_regs.x);
+
+    // test BEQ, BNE
+    pump_cpu();
     ASSERT_EQ(1, g_cpu_regs.x);
-    ASSERT_EQ(1, g_cpu_regs.y);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(2, g_cpu_regs.y);
+
+    // test BCS, BCC
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.x);
+    ASSERT_EQ(2, g_cpu_regs.y);
+
+    // test BPL, BMI
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.x);
+    ASSERT_EQ(2, g_cpu_regs.y);
+
+    // set overflow flag explicitly so we can test branching based on its value
+    g_cpu_regs.status.overflow = 1;
+
+    // test BVS, BVC
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.x);
+    ASSERT_EQ(2, g_cpu_regs.y);
 
     return true;
 }

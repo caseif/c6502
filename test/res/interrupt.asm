@@ -2,15 +2,18 @@
 ; test interrupts
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 SEC                 ; set carry bit
+
 BRK                 ; issue software interrupt
+CLC                 ; clear carry bit - should be skipped!
 LDA #$01            ; set A = 1
 LDY #$01            ; set Y = 1
 NOP                 ; perform assertions:
-                    ;     A = 1
+                    ;     A = 0
+                    ;     X = 1
+                    ;     Y = 1
                     ;     C = 1
 
 handler:
@@ -18,5 +21,7 @@ CLC                 ; clear carry bit
 LDX #$01            ; set X = 1
 RTI                 ; return from interrupt
 
-.org $BFFE          ; constant location of interrupt vector (we take advantage of mirroring here)
-.dw handler         ; interrupt vector itself
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw handler         ; special interrupt handler

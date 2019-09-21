@@ -28,6 +28,6 @@
 #include <stdio.h>
 
 #define ASSERT_EQ(e, a) if (e != a) { \
-                            printf("Failed assertion at %s:%d (expected %d, got %d)\n", __FILE__, __LINE__, e, a); \
+                            printf("Failed assertion at %s:%d (expected %02X, got %02X)\n", __FILE__, __LINE__, e, a); \
                             return false; \
                         }

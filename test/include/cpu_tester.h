@@ -23,33 +23,22 @@
  * THE SOFTWARE.
  */
 
-#include "test_assert.h"
-#include "cpu/cpu_tester.h"
+#pragma once
 
-#include "cpu/cpu.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-extern CpuRegisters g_cpu_regs;
+typedef struct {
+    unsigned char *data;
+    size_t size;
+} DataBlob;
 
-bool test_stack(void) {
-    load_cpu_test("stack.bin");
+void load_cpu_test(char *file_name);
 
-    pump_cpu();
-    ASSERT_EQ(0x01, g_cpu_regs.acc);
-    ASSERT_EQ(0xFD, g_cpu_regs.x);
-    ASSERT_EQ(0x02, g_cpu_regs.y);
-    ASSERT_EQ(0xFF, g_cpu_regs.sp);
+void pump_cpu(void);
 
-    pump_cpu();
-    ASSERT_EQ(0x01, g_cpu_regs.acc);
-    ASSERT_EQ(0x00, g_cpu_regs.x);
-    ASSERT_EQ(0x02, g_cpu_regs.y);
-    ASSERT_EQ(0xFF, g_cpu_regs.sp);
+uint8_t memory_read(uint16_t addr);
+void memory_write(uint16_t addr, uint8_t val);
 
-    pump_cpu();
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-    ASSERT_EQ(1, g_cpu_regs.status.interrupt_disable);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-
-    return true;
-}
+bool do_cpu_tests(void);

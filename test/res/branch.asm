@@ -2,7 +2,6 @@
 ; test branching
 ;;;;;;;;;;;;;;;;
 
-; required for execution on the NES
 .org $8000
 
 ;;;;;;;;;;;;;;;;
@@ -231,3 +230,8 @@ overflow_end:
 NOP                 ; perform assertions:
                     ; x = 1
                     ; y = 2
+
+.org $BFFA
+.dw $8000
+.dw $8000
+.dw $8000

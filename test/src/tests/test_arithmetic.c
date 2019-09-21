@@ -24,21 +24,70 @@
  */
 
 #include "test_assert.h"
-#include "cpu/cpu_tester.h"
+#include "cpu_tester.h"
 
-#include "cpu/cpu.h"
+#include "c6502/cpu.h"
 
 extern CpuRegisters g_cpu_regs;
 
-bool test_logic(void) {
-    load_cpu_test("logic.bin");
+bool test_arithmetic(void) {
+    load_cpu_test("arithmetic.bin");
 
-    // test AND
+    // test INX
 
     pump_cpu();
-    ASSERT_EQ(12, g_cpu_regs.acc);
+    ASSERT_EQ(1, g_cpu_regs.x);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.x);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0x80, g_cpu_regs.x);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0x81, g_cpu_regs.x);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // test INY
+
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.y);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.y);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0x80, g_cpu_regs.y);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0x81, g_cpu_regs.y);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // test INC
+
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
 
     pump_cpu();
     ASSERT_EQ(0x80, g_cpu_regs.acc);
@@ -46,33 +95,65 @@ bool test_logic(void) {
     ASSERT_EQ(0, g_cpu_regs.status.zero);
 
     pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
+    ASSERT_EQ(0x81, g_cpu_regs.acc);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
 
-    // test EOR
+    // test DEX
 
     pump_cpu();
-    ASSERT_EQ(12, g_cpu_regs.acc);
+    ASSERT_EQ(1, g_cpu_regs.x);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
 
     pump_cpu();
-    ASSERT_EQ(0xCC, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.x);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0xFF, g_cpu_regs.x);
     ASSERT_EQ(1, g_cpu_regs.status.negative);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
 
     pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
+    ASSERT_EQ(0x7F, g_cpu_regs.x);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // test DEY
+
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.y);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.y);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
     ASSERT_EQ(1, g_cpu_regs.status.zero);
 
-    // test ORA
+    pump_cpu();
+    ASSERT_EQ(0xFF, g_cpu_regs.y);
+    ASSERT_EQ(1, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
 
     pump_cpu();
-    ASSERT_EQ(0x3F, g_cpu_regs.acc);
+    ASSERT_EQ(0x7F, g_cpu_regs.y);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    // test DEC
+
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+
+    pump_cpu();
+    ASSERT_EQ(0, g_cpu_regs.acc);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+    ASSERT_EQ(1, g_cpu_regs.status.zero);
 
     pump_cpu();
     ASSERT_EQ(0xFF, g_cpu_regs.acc);
@@ -80,133 +161,9 @@ bool test_logic(void) {
     ASSERT_EQ(0, g_cpu_regs.status.zero);
 
     pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
-
-    // test ASL
-
-    pump_cpu();
-    ASSERT_EQ(14, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
+    ASSERT_EQ(0x7F, g_cpu_regs.acc);
     ASSERT_EQ(0, g_cpu_regs.status.negative);
     ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0xFE, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(2, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
-
-    // test ASL (memory)
-
-    pump_cpu();
-    ASSERT_EQ(14, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0xFE, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
-
-    // test LSR
-
-    pump_cpu();
-    ASSERT_EQ(3, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(3, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
-
-    // test ROL
-
-    pump_cpu();
-    ASSERT_EQ(14, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(15, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0xFF, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(3, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
-
-    // test LSR
-
-    pump_cpu();
-    ASSERT_EQ(3, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0x83, g_cpu_regs.acc);
-    ASSERT_EQ(0, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0x83, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(1, g_cpu_regs.status.negative);
-    ASSERT_EQ(0, g_cpu_regs.status.zero);
-
-    pump_cpu();
-    ASSERT_EQ(0, g_cpu_regs.acc);
-    ASSERT_EQ(1, g_cpu_regs.status.carry);
-    ASSERT_EQ(0, g_cpu_regs.status.negative);
-    ASSERT_EQ(1, g_cpu_regs.status.zero);
 
     return true;
 }

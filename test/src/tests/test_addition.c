@@ -24,9 +24,9 @@
  */
 
 #include "test_assert.h"
-#include "cpu/cpu_tester.h"
+#include "cpu_tester.h"
 
-#include "cpu/cpu.h"
+#include "c6502/cpu.h"
 
 extern CpuRegisters g_cpu_regs;
 

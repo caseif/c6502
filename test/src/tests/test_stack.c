@@ -23,12 +23,33 @@
  * THE SOFTWARE.
  */
 
-#pragma once
+#include "test_assert.h"
+#include "cpu_tester.h"
 
-#include <stdbool.h>
+#include "c6502/cpu.h"
 
-void load_cpu_test(char *file_name);
+extern CpuRegisters g_cpu_regs;
 
-void pump_cpu(void);
+bool test_stack(void) {
+    load_cpu_test("stack.bin");
 
-bool do_cpu_tests(void);
+    pump_cpu();
+    ASSERT_EQ(0x01, g_cpu_regs.acc);
+    ASSERT_EQ(0xFD, g_cpu_regs.x);
+    ASSERT_EQ(0x02, g_cpu_regs.y);
+    ASSERT_EQ(0xFF, g_cpu_regs.sp);
+
+    pump_cpu();
+    ASSERT_EQ(0x01, g_cpu_regs.acc);
+    ASSERT_EQ(0x00, g_cpu_regs.x);
+    ASSERT_EQ(0x02, g_cpu_regs.y);
+    ASSERT_EQ(0xFF, g_cpu_regs.sp);
+
+    pump_cpu();
+    ASSERT_EQ(1, g_cpu_regs.status.carry);
+    ASSERT_EQ(0, g_cpu_regs.status.zero);
+    ASSERT_EQ(1, g_cpu_regs.status.interrupt_disable);
+    ASSERT_EQ(0, g_cpu_regs.status.negative);
+
+    return true;
+}
