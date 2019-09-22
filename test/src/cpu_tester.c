@@ -44,7 +44,8 @@ extern bool test_status(void);
 extern bool test_store_load(void);
 extern bool test_subtraction(void);
 
-static unsigned char sys_ram[0x800];
+static unsigned char g_sys_ram[0x800];
+static uint8_t g_sys_bus;
 static DataBlob g_program;
 
 static DataBlob _load_file(FILE *file) {
@@ -65,9 +66,9 @@ static void _log_callback(char *instr_str, CpuRegisters last_regs) {
     printf("%04X %s %02X\n", last_regs.pc, instr_str, last_regs.sp);
 }
 
-uint8_t memory_read(uint16_t addr) {
+uint8_t system_memory_read(uint16_t addr) {
     if (addr < 0x2000) {
-        return sys_ram[addr % sizeof(sys_ram)];
+        return g_sys_ram[addr % sizeof(g_sys_ram)];
     } else if (addr >= 0x8000) {
         addr %= 0x8000;
 
@@ -86,9 +87,9 @@ uint8_t memory_read(uint16_t addr) {
     }
 }
 
-void memory_write(uint16_t addr, uint8_t val) {
+void system_memory_write(uint16_t addr, uint8_t val) {
     if (addr < 0x2000) {
-        sys_ram[addr % sizeof(sys_ram)] = val;
+        g_sys_ram[addr % sizeof(g_sys_ram)] = val;
     } else if (addr >= 0x8000) {
         addr %= 0x8000;
 
@@ -103,6 +104,14 @@ void memory_write(uint16_t addr, uint8_t val) {
 
         g_program.data[addr] = val;
     }
+}
+
+uint8_t system_bus_read(void) {
+    return g_sys_bus;
+}
+
+void system_bus_write(uint8_t val) {
+    g_sys_bus = val;
 }
 
 void load_cpu_test(char *file_name) {
@@ -123,9 +132,14 @@ void load_cpu_test(char *file_name) {
         exit(-1);
     }
 
-    memset(sys_ram, 0, sizeof(sys_ram));
+    memset(g_sys_ram, 0, sizeof(g_sys_ram));
 
-    initialize_cpu(memory_read, memory_write);
+    initialize_cpu((CpuSystemInterface){
+            system_memory_read,
+            system_memory_write,
+            system_bus_read,
+            system_bus_write
+    });
     //cpu_set_log_callback(_log_callback);
 
     printf("Successfully loaded program file %s.\n", file_name);

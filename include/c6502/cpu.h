@@ -63,12 +63,19 @@ typedef struct {
     bool set_i;
 } InterruptType;
 
+typedef struct {
+    uint8_t (*mem_read)(uint16_t);
+    void (*mem_write)(uint16_t, uint8_t);
+    uint8_t (*bus_read)(void);
+    void (*bus_write)(uint8_t);
+} CpuSystemInterface;
+
 extern const InterruptType INT_RESET;
 extern const InterruptType INT_NMI;
 extern const InterruptType INT_IRQ;
 extern const InterruptType INT_BRK;
 
-void initialize_cpu(uint8_t (*mem_read_func)(uint16_t), void (*mem_write_func)(uint16_t, uint8_t));
+void initialize_cpu(CpuSystemInterface system_iface);
 
 CpuRegisters *cpu_get_registers(void);
 

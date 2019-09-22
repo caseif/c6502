@@ -38,7 +38,7 @@ void load_cpu_test(char *file_name);
 
 void pump_cpu(void);
 
-uint8_t memory_read(uint16_t addr);
-void memory_write(uint16_t addr, uint8_t val);
+uint8_t system_memory_read(uint16_t addr);
+void system_memory_write(uint16_t addr, uint8_t val);
 
 bool do_cpu_tests(void);
