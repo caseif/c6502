@@ -47,10 +47,17 @@ const InterruptType INT_BRK = (InterruptType) {0xFFFE, false, true,  true,  true
 
 CpuRegisters g_cpu_regs;
 
+// whether each line was pulled low on the current cycle
+static bool g_nmi_pulled = false;
+static bool g_irq_pulled = false;
+static bool g_rst_pulled = false;
+
 // interrupt lines
-static bool g_nmi_line = false;
-static bool g_irq_line = false;
-static bool g_rst_line = false;
+static unsigned int g_nmi_line = 1;
+static unsigned int g_irq_line = 1;
+static unsigned int g_rst_line = 1;
+// flip-flop for detecting falling edge on the NMI line
+static bool g_nmi_flip_flop = false;
 
 // interrupt reader lines (delayed by one cycle)
 static bool g_nmi_line_reader = false;
@@ -161,28 +168,16 @@ static void _do_sbc(uint8_t m) {
     return _do_adc(~m);
 }
 
-void cpu_raise_nmi_line(void) {
-    g_nmi_line = true;
+void cpu_set_nmi_line(unsigned int val) {
+    g_nmi_pulled = val == 0;
 }
 
-void cpu_clear_nmi_line(void) {
-    g_nmi_line = false;
+void cpu_set_irq_line(unsigned int val) {
+    g_irq_pulled = val == 0;
 }
 
-void cpu_raise_irq_line(void) {
-    g_irq_line = true;
-}
-
-void cpu_clear_irq_line(void) {
-    g_irq_line = false;
-}
-
-void cpu_raise_rst_line(void) {
-    g_rst_line = true;
-}
-
-void cpu_clear_rst_line(void) {
-    g_rst_line = false;
+void cpu_set_rst_line(unsigned int val) {
+    g_rst_pulled = val == 0;
 }
 
 void _do_instr_operation() {
@@ -511,9 +506,27 @@ static void _reset_instr_state(void) {
 }
 
 static void _read_interrupt_lines(void) {
-    g_nmi_line_reader = g_nmi_line;
-    g_irq_line_reader = g_irq_line;
-    g_rst_line_reader = g_rst_line;
+    g_nmi_line_reader |= g_nmi_flip_flop;
+    g_nmi_flip_flop = false;
+    g_irq_line_reader |= g_irq_line == 0;
+    g_rst_line_reader |= g_rst_line == 0;
+
+    if (g_nmi_pulled) {
+        if (g_nmi_line == 1) {
+            g_nmi_flip_flop = true;
+        }
+        g_nmi_line = 0;
+    } else {
+        g_nmi_line = 1;
+    }
+
+    g_irq_line = !g_irq_pulled;
+
+    g_rst_line = !g_rst_pulled;
+
+    g_nmi_pulled = false;
+    g_irq_pulled = false;
+    g_rst_pulled = false;
 }
 
 static void _poll_interrupts(void) {
@@ -523,7 +536,6 @@ static void _poll_interrupts(void) {
         g_queued_interrupt = &INT_IRQ;
     } else if (g_rst_line_reader) {
         g_queued_interrupt = &INT_RST;
-        cpu_clear_rst_line();
     }
 }
 
@@ -535,11 +547,7 @@ static void _execute_interrupt(void) {
             _next_prg_byte(); // garbage read
             g_last_opcode = 0; // BRK
 
-            if (g_cur_interrupt == &INT_NMI) {
-                cpu_clear_nmi_line();
-            } else if (g_cur_interrupt == &INT_IRQ) {
-                cpu_clear_irq_line();
-            } else if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
+            if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
                 g_nmi_hijack = true;
             }
 
@@ -612,7 +620,17 @@ static void _execute_interrupt(void) {
             g_cpu_regs.pc &= ~0xFF00;
             g_cpu_regs.pc |= (g_sys_iface.mem_read(g_cur_interrupt->vector_loc + 1) << 8);
             g_instr_cycle = 0; // reset for next instruction
+
+            if (g_cur_interrupt == &INT_NMI) {
+                g_nmi_line_reader = false;
+            } else if (g_cur_interrupt == &INT_IRQ) {
+                g_irq_line_reader = false;
+            } else if (g_cur_interrupt == &INT_BRK) {
+                g_rst_line_reader = false;
+            }
+
             g_cur_interrupt = NULL;
+
             break;
         }
     }
@@ -1212,7 +1230,7 @@ static void _do_instr_cycle(void) {
 void cycle_cpu(void) {
     _do_instr_cycle();
     
-    if (g_instr_cycle == 0 && !(g_cur_instr != NULL && g_cur_instr->addr_mode == REL)) {
+    if (g_queued_interrupt == NULL && g_instr_cycle == 0 && !(g_cur_instr != NULL && g_cur_instr->addr_mode == REL)) {
         _poll_interrupts();
     }
 
