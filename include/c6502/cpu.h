@@ -70,11 +70,6 @@ typedef struct {
     void (*bus_write)(uint8_t);
 } CpuSystemInterface;
 
-extern const InterruptType INT_RST;
-extern const InterruptType INT_NMI;
-extern const InterruptType INT_IRQ;
-extern const InterruptType INT_BRK;
-
 void initialize_cpu(CpuSystemInterface system_iface);
 
 CpuRegisters *cpu_get_registers(void);
@@ -85,11 +80,9 @@ Instruction *cpu_get_current_instruction(void);
 
 void cpu_set_log_callback(void (*callback)(char*, CpuRegisters));
 
-void cpu_set_nmi_line(unsigned int val);
-
-void cpu_set_irq_line(unsigned int val);
-
-void cpu_set_rst_line(unsigned int val);
+void cpu_pull_down_nmi_line(void);
+void cpu_pull_down_irq_line(void);
+void cpu_pull_down_rst_line(void);
 
 bool issue_interrupt(const InterruptType *type);
 

@@ -168,16 +168,16 @@ static void _do_sbc(uint8_t m) {
     return _do_adc(~m);
 }
 
-void cpu_set_nmi_line(unsigned int val) {
-    g_nmi_pulled = val == 0;
+void cpu_pull_down_nmi_line(void) {
+    g_nmi_pulled = true;
 }
 
-void cpu_set_irq_line(unsigned int val) {
-    g_irq_pulled = val == 0;
+void cpu_pull_down_irq_line(void) {
+    g_irq_pulled = true;
 }
 
-void cpu_set_rst_line(unsigned int val) {
-    g_rst_pulled = val == 0;
+void cpu_pull_down_rst_line(void) {
+    g_rst_pulled = true;
 }
 
 void _do_instr_operation() {
