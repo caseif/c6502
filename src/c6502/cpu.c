@@ -483,11 +483,12 @@ static void _reset_instr_state(void) {
 }
 
 static void _read_interrupt_lines(void) {
-    g_nmi_edge_detector = g_nmi_edge_detector || (g_nmi_line_last_state == 1 && g_sys_iface.poll_nmi_line() == 0);
-    g_irq_line_reader = g_irq_line_reader || g_sys_iface.poll_irq_line() == 0;
-    g_rst_line_reader = g_rst_line_reader || g_sys_iface.poll_rst_line() == 0;
+    g_nmi_edge_detector |= (g_nmi_line_last_state == 1 && g_sys_iface.poll_nmi_line() == 0);
 
     g_nmi_line_last_state = g_sys_iface.poll_nmi_line();
+
+    g_irq_line_reader = g_sys_iface.poll_irq_line() == 0;
+    g_rst_line_reader = g_sys_iface.poll_rst_line() == 0;
 }
 
 static void _poll_interrupts(void) {
