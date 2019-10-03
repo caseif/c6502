@@ -47,22 +47,11 @@ const InterruptType INT_BRK = (InterruptType) {0xFFFE, false, true,  true,  true
 
 CpuRegisters g_cpu_regs;
 
-// whether each line was pulled low on the current cycle
-static bool g_nmi_pulled = false;
-static bool g_irq_pulled = false;
-static bool g_rst_pulled = false;
-
-// interrupt lines
-static unsigned int g_nmi_line = 1;
-static unsigned int g_irq_line = 1;
-static unsigned int g_rst_line = 1;
-// flip-flop for detecting falling edge on the NMI line
-static bool g_nmi_flip_flop = false;
-
 // interrupt reader lines (delayed by one cycle)
-static bool g_nmi_line_reader = false;
+static bool g_nmi_edge_detector = false;
 static bool g_irq_line_reader = false;
 static bool g_rst_line_reader = false;
+static unsigned int g_nmi_line_last_state = 1;
 
 static CpuSystemInterface g_sys_iface;
 
@@ -166,18 +155,6 @@ static void _do_adc(uint8_t m) {
 
 static void _do_sbc(uint8_t m) {
     return _do_adc(~m);
-}
-
-void cpu_pull_down_nmi_line(void) {
-    g_nmi_pulled = true;
-}
-
-void cpu_pull_down_irq_line(void) {
-    g_irq_pulled = true;
-}
-
-void cpu_pull_down_rst_line(void) {
-    g_rst_pulled = true;
 }
 
 void _do_instr_operation() {
@@ -506,31 +483,15 @@ static void _reset_instr_state(void) {
 }
 
 static void _read_interrupt_lines(void) {
-    g_nmi_line_reader |= g_nmi_flip_flop;
-    g_nmi_flip_flop = false;
-    g_irq_line_reader |= g_irq_line == 0;
-    g_rst_line_reader |= g_rst_line == 0;
+    g_nmi_edge_detector = g_nmi_edge_detector || (g_nmi_line_last_state == 1 && g_sys_iface.poll_nmi_line() == 0);
+    g_irq_line_reader = g_irq_line_reader || g_sys_iface.poll_irq_line() == 0;
+    g_rst_line_reader = g_rst_line_reader || g_sys_iface.poll_rst_line() == 0;
 
-    if (g_nmi_pulled) {
-        if (g_nmi_line == 1) {
-            g_nmi_flip_flop = true;
-        }
-        g_nmi_line = 0;
-    } else {
-        g_nmi_line = 1;
-    }
-
-    g_irq_line = !g_irq_pulled;
-
-    g_rst_line = !g_rst_pulled;
-
-    g_nmi_pulled = false;
-    g_irq_pulled = false;
-    g_rst_pulled = false;
+    g_nmi_line_last_state = g_sys_iface.poll_nmi_line();
 }
 
 static void _poll_interrupts(void) {
-    if (g_nmi_line_reader) {
+    if (g_nmi_edge_detector) {
         g_queued_interrupt = &INT_NMI;
     } else if (g_irq_line_reader && !g_cpu_regs.status.interrupt_disable) {
         g_queued_interrupt = &INT_IRQ;
@@ -547,7 +508,7 @@ static void _execute_interrupt(void) {
             _next_prg_byte(); // garbage read
             g_last_opcode = 0; // BRK
 
-            if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
+            if (g_cur_interrupt == &INT_BRK && g_nmi_edge_detector) {
                 g_nmi_hijack = true;
             }
 
@@ -558,7 +519,7 @@ static void _execute_interrupt(void) {
                 g_cpu_regs.pc++; // increment PC anyway for software interrupts
             }
 
-            if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
+            if (g_cur_interrupt == &INT_BRK && g_nmi_edge_detector) {
                 g_nmi_hijack = true;
             }
 
@@ -570,7 +531,7 @@ static void _execute_interrupt(void) {
             }
             g_cpu_regs.sp--;
 
-            if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
+            if (g_cur_interrupt == &INT_BRK && g_nmi_edge_detector) {
                 g_nmi_hijack = true;
             }
 
@@ -582,7 +543,7 @@ static void _execute_interrupt(void) {
             }
             g_cpu_regs.sp--;
 
-            if (g_cur_interrupt == &INT_BRK && g_nmi_line) {
+            if (g_cur_interrupt == &INT_BRK && g_nmi_edge_detector) {
                 g_nmi_hijack = true;
             }
 
@@ -622,14 +583,17 @@ static void _execute_interrupt(void) {
             g_instr_cycle = 0; // reset for next instruction
 
             if (g_cur_interrupt == &INT_NMI) {
-                g_nmi_line_reader = false;
+                g_nmi_edge_detector = false;
             } else if (g_cur_interrupt == &INT_IRQ) {
                 g_irq_line_reader = false;
-            } else if (g_cur_interrupt == &INT_BRK) {
+            } else if (g_cur_interrupt == &INT_BRK || g_cur_interrupt == &INT_RST) {
                 g_rst_line_reader = false;
             }
 
             g_cur_interrupt = NULL;
+
+            // update the register snapshot to reflect state after the interrupt
+            g_regs_snapshot = g_cpu_regs;
 
             break;
         }

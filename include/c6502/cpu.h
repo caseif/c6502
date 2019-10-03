@@ -68,6 +68,9 @@ typedef struct {
     void (*mem_write)(uint16_t, uint8_t);
     uint8_t (*bus_read)(void);
     void (*bus_write)(uint8_t);
+    unsigned int (*poll_nmi_line)(void);
+    unsigned int (*poll_irq_line)(void);
+    unsigned int (*poll_rst_line)(void);
 } CpuSystemInterface;
 
 void initialize_cpu(CpuSystemInterface system_iface);
@@ -79,12 +82,6 @@ uint8_t cpu_get_instruction_step(void);
 Instruction *cpu_get_current_instruction(void);
 
 void cpu_set_log_callback(void (*callback)(char*, CpuRegisters));
-
-void cpu_pull_down_nmi_line(void);
-void cpu_pull_down_irq_line(void);
-void cpu_pull_down_rst_line(void);
-
-bool issue_interrupt(const InterruptType *type);
 
 void cycle_cpu(void);
 
