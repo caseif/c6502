@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_arithmetic(void) {
-    load_cpu_test("arithmetic.bin");
+    if (!load_cpu_test("arithmetic.bin")) {
+       return false;
+    }
 
     // test INX
 

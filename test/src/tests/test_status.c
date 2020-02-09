@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_status(void) {
-    load_cpu_test("status.bin");
+    if (!load_cpu_test("status.bin")) {
+       return false;
+    }
 
     // test explicit flag-setting
     pump_cpu();

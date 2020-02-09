@@ -29,7 +29,9 @@
 #include "c6502/cpu.h"
 
 bool test_store_load(void) {
-    load_cpu_test("store_load.bin");
+    if (!load_cpu_test("store_load.bin")) {
+       return false;
+    }
 
     // ACCUMULATOR TESTS
     // test zero-page addressing

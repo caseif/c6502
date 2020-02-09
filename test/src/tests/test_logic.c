@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_logic(void) {
-    load_cpu_test("logic.bin");
+    if (!load_cpu_test("logic.bin")) {
+       return false;
+    }
 
     // test AND
 

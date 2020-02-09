@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_branch(void) {
-    load_cpu_test("branch.bin");
+    if (!load_cpu_test("branch.bin")) {
+       return false;
+    }
 
     // test JMP (indirect)
     pump_cpu();

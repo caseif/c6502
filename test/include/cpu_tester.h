@@ -34,7 +34,7 @@ typedef struct {
     size_t size;
 } DataBlob;
 
-void load_cpu_test(char *file_name);
+bool load_cpu_test(char *file_name);
 
 void pump_cpu(void);
 

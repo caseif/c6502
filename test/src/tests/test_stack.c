@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_stack(void) {
-    load_cpu_test("stack.bin");
+    if (!load_cpu_test("stack.bin")) {
+       return false;
+    }
 
     pump_cpu();
     ASSERT_EQ(0x01, g_cpu_regs.acc);

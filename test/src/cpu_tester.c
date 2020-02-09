@@ -29,6 +29,7 @@
 #include "c6502/cpu.h"
 #include "c6502/instrs.h"
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,13 +50,19 @@ static uint8_t g_sys_bus;
 static DataBlob g_program;
 
 static DataBlob _load_file(FILE *file) {
-    fseek(file, 0L, SEEK_END);
+    if (fseek(file, 0L, SEEK_END) != 0) {
+        printf("Failed to seek to file end\n");
+        exit(-1);
+    }
     size_t size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        printf("Failed to seek to file start\n");
+        exit(-1);
+    }
 
     unsigned char *data = malloc(size);
     if (!data || !fread(data, size, 1, file)) {
-        printf("Failed to read file\n");
+        printf("Failed to read file (errno: %d)\n", errno);
         exit(-1);
     }
 
@@ -114,15 +121,29 @@ void system_bus_write(uint8_t val) {
     g_sys_bus = val;
 }
 
-void load_cpu_test(char *file_name) {
-    char *prefix = "test/res/";
+unsigned int poll_nmi_line(void) {
+    return 1;
+}
+
+unsigned int poll_irq_line(void) {
+    return 1;
+}
+
+unsigned int poll_rst_line(void) {
+    return 1;
+}
+
+
+bool load_cpu_test(char *file_name) {
+    char *prefix = "test\\res\\";
     char *qualified = malloc(strlen(file_name) + strlen(prefix) + 1);
     sprintf(qualified, "%s%s", prefix, file_name);
 
     FILE *program_file = fopen(qualified, "rb");
 
     if (!program_file) {
-        printf("Could not open program file %s.\n", file_name);
+        printf("Could not open program file %s. Errno: %d\n", file_name, errno);
+        return false;
     }
 
     g_program = _load_file(program_file);
@@ -138,7 +159,10 @@ void load_cpu_test(char *file_name) {
             system_memory_read,
             system_memory_write,
             system_bus_read,
-            system_bus_write
+            system_bus_write,
+            poll_nmi_line,
+            poll_irq_line,
+            poll_rst_line
     });
     //cpu_set_log_callback(_log_callback);
 

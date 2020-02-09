@@ -30,8 +30,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef _MSC_VER
+#define PACKED
+#else
 #define PACKED __attribute__((packed))
+#endif
 
+#ifdef _MSC_VER
+#pragma pack(push,1)
+#endif
 typedef union {
     struct {
         unsigned char carry:1 PACKED;
@@ -45,6 +52,9 @@ typedef union {
     };
     unsigned char serial:8;
 } StatusRegister;
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 typedef struct {
     StatusRegister status;

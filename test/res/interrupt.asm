@@ -7,7 +7,9 @@
 SEC                 ; set carry bit
 
 BRK                 ; issue software interrupt
-CLC                 ; clear carry bit - should be skipped!
+;TODO: Mossy changed to add a padding byte after BRK,
+;not sure if that should be reverted
+;CLC                 ; clear carry bit - should be skipped!
 LDA #$01            ; set A = 1
 LDY #$01            ; set Y = 1
 NOP                 ; perform assertions:

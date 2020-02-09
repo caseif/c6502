@@ -33,6 +33,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #define STACK_BOTTOM_ADDR 0x100
 #define BASE_SP 0xFF
 #define DEFAULT_STATUS 0x24 // interrupt-disable and unused flag are set by default
@@ -40,10 +44,10 @@
 #define ASSERT_CYCLE(l, h)  assert(g_instr_cycle >= l); \
                             assert(g_instr_cycle <= h)
 
-const InterruptType INT_NMI = (InterruptType) {0xFFFA, false, true, false, false};
-const InterruptType INT_RST = (InterruptType) {0xFFFC, false, false,  false, true};
-const InterruptType INT_IRQ = (InterruptType) {0xFFFE, true,  true,  false, true};
-const InterruptType INT_BRK = (InterruptType) {0xFFFE, false, true,  true,  true};
+InterruptType INT_NMI = {0xFFFA, false, true, false, false};
+InterruptType INT_RST = {0xFFFC, false, false,  false, true};
+InterruptType INT_IRQ = {0xFFFE, true,  true,  false, true};
+InterruptType INT_BRK = {0xFFFE, false, true,  true,  true};
 
 CpuRegisters g_cpu_regs;
 
@@ -154,7 +158,7 @@ static void _do_adc(uint8_t m) {
 }
 
 static void _do_sbc(uint8_t m) {
-    return _do_adc(~m);
+    _do_adc(~m);
 }
 
 void _do_instr_operation() {

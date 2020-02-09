@@ -31,7 +31,9 @@
 extern CpuRegisters g_cpu_regs;
 
 bool test_interrupt(void) {
-    load_cpu_test("interrupt.bin");
+    if (!load_cpu_test("interrupt.bin")) {
+       return false;
+    }
 
     pump_cpu();
     ASSERT_EQ(1, g_cpu_regs.acc);
