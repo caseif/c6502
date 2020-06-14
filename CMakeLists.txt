@@ -7,22 +7,27 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 
 set(CMAKE_C_OUTPUT_EXTENSION_REPLACE 1)
 
+option(C6502_BUILD_TEST "Build target for test executable" ON)
+
 if(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 endif()
 
 set(TARGET_LIB ${PROJECT_NAME})
-set(TARGET_TEST ${PROJECT_NAME}_test)
 
 set(LIB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(LIB_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/src")
-set(TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/include")
-
 file(GLOB_RECURSE LIB_C_FILES ${LIB_SRC_DIR}/*.c)
 file(GLOB_RECURSE LIB_H_FILES ${LIB_INC_DIR}/*.h)
-file(GLOB_RECURSE TEST_C_FILES ${TEST_SRC_DIR}/*.c)
-file(GLOB_RECURSE TEST_H_FILES ${TEST_INC_DIR}/*.h)
+
+if(C6502_BUILD_TEST)
+  set(TARGET_TEST ${PROJECT_NAME}_test)
+
+  set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/src")
+  set(TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/include")
+  file(GLOB_RECURSE TEST_C_FILES ${TEST_SRC_DIR}/*.c)
+  file(GLOB_RECURSE TEST_H_FILES ${TEST_INC_DIR}/*.h)
+endif()
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -50,15 +55,17 @@ set_target_properties(${TARGET_LIB} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(${TARGET_LIB} PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(${TARGET_LIB} PROPERTIES C_STANDARD 11)
 
-add_executable(${TARGET_TEST} ${TEST_C_FILES} ${TEST_H_FILES})
+if(C6502_BUILD_TEST)
+  add_executable(${TARGET_TEST} ${TEST_C_FILES} ${TEST_H_FILES})
 
-target_include_directories(${TARGET_TEST} PRIVATE "${TEST_INC_DIR};${LIB_INC_DIR}")
+  target_include_directories(${TARGET_TEST} PRIVATE "${TEST_INC_DIR};${LIB_INC_DIR}")
 
-target_link_libraries(${TARGET_TEST} ${TARGET_LIB})
+  target_link_libraries(${TARGET_TEST} ${TARGET_LIB})
 
-set_target_properties(${TARGET_TEST} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(${TARGET_TEST} PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(${TARGET_TEST} PROPERTIES C_STANDARD 11)
+  set_target_properties(${TARGET_TEST} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  set_target_properties(${TARGET_TEST} PROPERTIES LINKER_LANGUAGE C)
+  set_target_properties(${TARGET_TEST} PROPERTIES C_STANDARD 11)
+endif()
 
 if(UNIX)
   install(TARGETS ${TARGET_LIB}
@@ -69,5 +76,7 @@ if(UNIX)
           PATTERN "${LIB_INC_DIR}/*")
 endif()
 
-enable_testing()
-add_test(NAME "cputest" COMMAND $<TARGET_FILE:${TARGET_TEST}> "${CMAKE_CURRENT_SOURCE_DIR}/test/res")
+if(C6502_BUILD_TEST)
+  enable_testing()
+  add_test(NAME "cputest" COMMAND $<TARGET_FILE:${TARGET_TEST}> "${CMAKE_CURRENT_SOURCE_DIR}/test/res")
+endif()
