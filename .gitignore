@@ -4,5 +4,6 @@ build/
 *.P
 
 *.bin
+!test/res/*.bin
 
 .vscode/

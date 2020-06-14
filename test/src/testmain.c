@@ -29,10 +29,21 @@
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
+    if (argc > 2) {
+        printf("Too many params!\nUsage: c6502_test [resource prefix]");
+        return 1;
+    }
+
+    char *res_prefix = ".";
+
+    if (argc == 2) {
+        res_prefix = argv[1];
+        printf("Using prefix %s\n", res_prefix);
+    }
 
     printf("Starting CPU tests...\n");
 
-    if (do_cpu_tests()) {
+    if (do_cpu_tests(res_prefix)) {
         printf("All CPU tests completed successfully.\n");
     } else {
         printf("CPU tests failed!\n");

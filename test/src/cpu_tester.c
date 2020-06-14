@@ -49,6 +49,8 @@ static unsigned char g_sys_ram[0x800];
 static uint8_t g_sys_bus;
 static DataBlob g_program;
 
+static char *g_res_prefix;
+
 static DataBlob _load_file(FILE *file) {
     if (fseek(file, 0L, SEEK_END) != 0) {
         printf("Failed to seek to file end\n");
@@ -135,9 +137,8 @@ unsigned int poll_rst_line(void) {
 
 
 bool load_cpu_test(char *file_name) {
-    char *prefix = "test\\res\\";
-    char *qualified = malloc(strlen(file_name) + strlen(prefix) + 1);
-    sprintf(qualified, "%s%s", prefix, file_name);
+    char *qualified = malloc(strlen(file_name) + strlen(g_res_prefix) + 2);
+    sprintf(qualified, "%s/%s", g_res_prefix, file_name);
 
     FILE *program_file = fopen(qualified, "rb");
 
@@ -181,7 +182,9 @@ void pump_cpu(void) {
             && cpu_get_instruction_step() == 1));
 }
 
-bool do_cpu_tests(void) {
+bool do_cpu_tests(char *res_prefix) {
+    g_res_prefix = res_prefix;
+
     bool res = true;
 
     res &= test_addition();

@@ -41,4 +41,4 @@ void pump_cpu(void);
 uint8_t system_memory_read(uint16_t addr);
 void system_memory_write(uint16_t addr, uint8_t val);
 
-bool do_cpu_tests(void);
+bool do_cpu_tests(char *res_prefix);

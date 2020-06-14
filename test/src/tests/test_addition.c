@@ -32,7 +32,7 @@ extern CpuRegisters g_cpu_regs;
 
 bool test_addition(void) {
     if (!load_cpu_test("addition.bin")) {
-        return;
+        return false;
     }
 
     pump_cpu();

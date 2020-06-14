@@ -11,13 +11,22 @@ if(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(SRC_DIR src)
-set(INC_DIR include)
+set(TARGET_LIB ${PROJECT_NAME})
+set(TARGET_TEST ${PROJECT_NAME}_test)
 
-file(GLOB_RECURSE C_FILES ${SRC_DIR}/*.c)
-file(GLOB_RECURSE H_FILES ${INC_DIR}/*.h)
+set(LIB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(LIB_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(TEST_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/src")
+set(TEST_INC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/include")
+
+file(GLOB_RECURSE LIB_C_FILES ${LIB_SRC_DIR}/*.c)
+file(GLOB_RECURSE LIB_H_FILES ${LIB_INC_DIR}/*.h)
+file(GLOB_RECURSE TEST_C_FILES ${TEST_SRC_DIR}/*.c)
+file(GLOB_RECURSE TEST_H_FILES ${TEST_INC_DIR}/*.h)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 if(MSVC)
   set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} /W4")
@@ -33,19 +42,32 @@ else()
   set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${C_FILES} ${H_FILES})
+add_library(${PROJECT_NAME} STATIC ${LIB_C_FILES} ${LIB_H_FILES})
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${INC_DIR}) 
+target_include_directories(${TARGET_LIB} PUBLIC ${LIB_INC_DIR}) 
 
-set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
-set_target_properties(${PROJECT_NAME} PROPERTIES C_STANDARD 11)
+set_target_properties(${TARGET_LIB} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(${TARGET_LIB} PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(${TARGET_LIB} PROPERTIES C_STANDARD 11)
+
+add_executable(${TARGET_TEST} ${TEST_C_FILES} ${TEST_H_FILES})
+
+target_include_directories(${TARGET_TEST} PRIVATE "${TEST_INC_DIR};${LIB_INC_DIR}")
+
+target_link_libraries(${TARGET_TEST} ${TARGET_LIB})
+
+set_target_properties(${TARGET_TEST} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(${TARGET_TEST} PROPERTIES LINKER_LANGUAGE C)
+set_target_properties(${TARGET_TEST} PROPERTIES C_STANDARD 11)
 
 if(UNIX)
-  install(TARGETS ${PROJECT_NAME}
+  install(TARGETS ${TARGET_LIB}
           ARCHIVE
           DESTINATION "/usr/lib")
-  install(DIRECTORY "${INC_DIR}/"
+  install(DIRECTORY "${LIB_INC_DIR}/"
           DESTINATION "/usr/include"
-          PATTERN "${INC_DIR}/*")
+          PATTERN "${LIB_INC_DIR}/*")
 endif()
+
+enable_testing()
+add_test(NAME "cputest" COMMAND $<TARGET_FILE:${TARGET_TEST}> "${CMAKE_CURRENT_SOURCE_DIR}/test/res")
