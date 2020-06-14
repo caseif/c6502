@@ -1215,10 +1215,10 @@ char *cpu_print_current_instruction(char *target) {
             sprintf(str_machine_code, "%02X      ", g_last_opcode);
             break;
         case 2:
-            sprintf(str_machine_code, "%02X %02X   ", g_last_opcode, g_cur_operand);
+            sprintf(str_machine_code, "%02X %02X   ", g_last_opcode, g_cur_operand & 0xFF);
             break;
         case 3:
-            sprintf(str_machine_code, "%02X %02X %02X", g_last_opcode, g_cur_operand & 0xFF,g_cur_operand >> 8);
+            sprintf(str_machine_code, "%02X %02X %02X", g_last_opcode, g_cur_operand & 0xFF, g_cur_operand >> 8);
             break;
     }
 
@@ -1226,16 +1226,16 @@ char *cpu_print_current_instruction(char *target) {
     InstructionType instr_type = get_instr_type(g_cur_instr->mnemonic);
     switch (g_cur_instr->addr_mode) {
         case IMM:
-            sprintf(str_param, "#$%02X                   ", g_cur_operand);
+            sprintf(str_param, "#$%02X                   ", g_cur_operand & 0xFF);
             break;
         case ZRP:
             switch (instr_type) {
                 case INS_R:
                 case INS_RW:
-                    sprintf(str_param, "$%02X              -> $%02X", g_cur_operand, g_sys_iface.bus_read());
+                    sprintf(str_param, "$%02X              -> $%02X", g_cur_operand & 0xFF, g_sys_iface.bus_read());
                     break;
                 default:
-                    sprintf(str_param, "$%02X              <- $%02X", g_cur_operand, g_sys_iface.bus_read());
+                    sprintf(str_param, "$%02X              <- $%02X", g_cur_operand & 0xFF, g_sys_iface.bus_read());
                     break;
             }
             break;
@@ -1244,11 +1244,13 @@ char *cpu_print_current_instruction(char *target) {
             switch (instr_type) {
                 case INS_R:
                     sprintf(str_param, "$%02X,%c   -> $%04X -> $%02X",
-                            g_cur_operand, g_cur_instr->addr_mode == ZPX ? 'X' : 'Y', g_eff_operand, g_sys_iface.bus_read());
+                            g_cur_operand & 0xFF, g_cur_instr->addr_mode == ZPX ? 'X' : 'Y', g_eff_operand,
+                            g_sys_iface.bus_read());
                     break;
                 default:
                     sprintf(str_param, "$%02X,%c   -> $%04X <- $%02X",
-                            g_cur_operand, g_cur_instr->addr_mode == ZPX ? 'X' : 'Y', g_eff_operand, g_sys_iface.bus_read());
+                            g_cur_operand & 0xFF, g_cur_instr->addr_mode == ZPX ? 'X' : 'Y', g_eff_operand,
+                            g_sys_iface.bus_read());
                     break;
             }
             break;
@@ -1277,16 +1279,18 @@ char *cpu_print_current_instruction(char *target) {
             break;
         case REL:
             sprintf(str_param, "#$%02X    -> $%04X       ",
-                    g_cur_operand, g_eff_operand);
+                    g_cur_operand & 0xFF, g_eff_operand);
             break;
         case IND:
             sprintf(str_param, "($%04X) -> $%04X       ", g_cur_operand, g_eff_operand);
             break;
         case IZX:
-            sprintf(str_param, "($%02X,X) -> $%04X -> $%02X", g_cur_operand, g_eff_operand, g_sys_iface.bus_read());
+            sprintf(str_param, "($%02X,X) -> $%04X -> $%02X", g_cur_operand & 0xFF, g_eff_operand,
+                    g_sys_iface.bus_read());
             break;
         case IZY:
-            sprintf(str_param, "($%02X),Y -> $%04X -> $%02X", g_cur_operand, g_eff_operand, g_sys_iface.bus_read());
+            sprintf(str_param, "($%02X),Y -> $%04X -> $%02X", g_cur_operand & 0xFF, g_eff_operand,
+                    g_sys_iface.bus_read());
             break;
         case IMP:
             sprintf(str_param, "                       ");
