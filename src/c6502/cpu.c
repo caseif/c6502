@@ -573,7 +573,7 @@ static void _execute_interrupt(void) {
             g_cpu_regs.sp--;
             break;
         case 6:
-            // clear PC high and set to vector value
+            // clear PC low and set to vector value
             g_cpu_regs.pc &= ~0xFF;
             g_cpu_regs.pc |= g_sys_iface.mem_read(g_cur_interrupt->vector_loc);
 
